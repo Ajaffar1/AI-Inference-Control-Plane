@@ -35,7 +35,7 @@ export function createServer({store, demo = false, token}) {
         }
         return json(404,{error:'Unknown endpoint'});
       }
-      const files = {'/':'index.html','/app.js':'app.js','/style.css':'style.css'};
+      const files = {'/':'index.html','/app.js':'app.js','/style.css':'style.css','/simulation.js':'../src/simulation.js'};
       if (req.method !== 'GET' || !files[url.pathname]) return json(404,{error:'Not found'});
       const data = await readFile(new URL(`../web/${files[url.pathname]}`,import.meta.url));
       res.writeHead(200,{'Content-Type':url.pathname.endsWith('.js')?'text/javascript':url.pathname.endsWith('.css')?'text/css':'text/html'});

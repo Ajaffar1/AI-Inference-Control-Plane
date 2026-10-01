@@ -89,3 +89,9 @@ Next milestones: versioned provider price registry; normalized provider adapters
 ## License
 
 MIT. This repository is public and usable from source; npm publication and hosted deployment are separate future steps.
+
+## Interactive decision tools
+
+The dashboard also includes a daily spend timeline, task-cohort cost/acceptance plot, constrained model-selection planner, cheap-first escalation calculator, linear budget forecast, dark theme, and a click-to-inspect attempt viewer.
+
+Routing selection uses fully priced and evaluated observations from the selected cohort, acceptance target, p95 latency limit and cost ceiling. It does not modify provider traffic. Escalation savings include an explicit validation cost, allow negative savings, and assume a reliable quality gate. Budget planning uses separate user-entered period assumptions. These tools are illustrative decision support, not measured savings or automatic policy enforcement.
