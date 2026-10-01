@@ -30,7 +30,7 @@ export function validateEvent(event) {
   if (!['completed', 'failed'].includes(event.status)) throw new TypeError('Invalid status');
   if (![null, true, false].includes(event.accepted)) throw new TypeError('Invalid outcome');
   if (!Number.isFinite(event.latencyMs) || event.latencyMs < 0) throw new TypeError('Invalid latency');
-  if (!Number.isFinite(Date.parse(event.timestamp))) throw new TypeError('Invalid timestamp');
+  if (typeof event.timestamp !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(event.timestamp) || !Number.isFinite(Date.parse(event.timestamp)) || new Date(event.timestamp).toISOString() !== event.timestamp) throw new TypeError('Invalid timestamp');
   const expected = event.usage === null ? {status:'unknown', nanoUsd:null, usd:null} : priceUsage(event.usage, event.rates);
   if (JSON.stringify(expected) !== JSON.stringify(event.cost)) throw new TypeError('Cost does not match usage and rates');
   return event;
@@ -48,7 +48,7 @@ export function createTracker({ record, clock = () => performance.now() }) {
       let result;
       try { result = await call(); }
       catch (error) {
-        const event = createEvent({ ...metadata, status: 'failed', accepted: null, latencyMs: Math.max(0, clock() - started), usage: error.usage ?? null });
+        const event = createEvent({ ...metadata, status: 'failed', accepted: null, latencyMs: Math.max(0, clock() - started), usage: error?.usage ?? null });
         try { await record(event); } catch (recordError) { throw new AggregateError([error, recordError], 'Provider call and telemetry persistence failed'); }
         throw error;
       }

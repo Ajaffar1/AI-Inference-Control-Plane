@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { EventStore } from './store.js';
 import { summarize, frontier, validateEvent } from './index.js';
+import { diagnose } from './diagnostics.js';
 import { demoEvents } from './demo.js';
 
 export function createServer({store, demo = false, token}) {
@@ -11,23 +12,25 @@ export function createServer({store, demo = false, token}) {
     const json = (status, value) => {res.writeHead(status, {'Content-Type':'application/json', 'Cache-Control':'no-store'});res.end(JSON.stringify(value));};
     res.setHeader('X-Content-Type-Options','nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'");
-    const url = new URL(req.url, 'http://localhost');
     try {
+      const url = new URL(req.url, 'http://localhost');
       if (url.pathname.startsWith('/api/')) {
         if (!demo && (!token || req.headers.authorization !== `Bearer ${token}`)) return json(401,{error:'Bearer token required'});
         if (req.method === 'GET' && url.pathname === '/api/report') {
           let events = demo ? fixtures : await store.list();
           for (const key of ['project','task']) if (url.searchParams.get(key)) events = events.filter(e=>e[key]===url.searchParams.get(key));
           const rows = summarize(events);
-          return json(200,{demo, events, rows, frontier:frontier(rows), projects:[...new Set((demo ? fixtures : await store.list()).map(e=>e.project))]});
+          return json(200,{demo, events, rows, frontier:frontier(rows), diagnostics:diagnose(events), projects:[...new Set((demo ? fixtures : await store.list()).map(e=>e.project))]});
         }
         if (req.method === 'POST' && ['/api/events','/api/outcomes'].includes(url.pathname)) {
           if (demo) return json(403,{error:'Demo mode is read-only'});
-          let body = '';
+          const chunks = []; let size = 0;
           for await (const chunk of req) {
-            body += chunk;
-            if (Buffer.byteLength(body)>65536) return json(413,{error:'Event exceeds 64 KiB'});
+            size += chunk.length;
+            if (size>65536) return json(413,{error:'Event exceeds 64 KiB'});
+            chunks.push(chunk);
           }
+          const body = Buffer.concat(chunks).toString('utf8');
           if (url.pathname === '/api/outcomes') {const outcome=JSON.parse(body);await store.recordOutcome(outcome.executionId,outcome.accepted);return json(201,{recorded:true});}
           const event = validateEvent(JSON.parse(body));
           await store.append(event);

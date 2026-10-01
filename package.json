@@ -4,7 +4,21 @@
   "description": "Local-first inference telemetry, auditable pricing and outcome economics",
   "type": "module",
   "private": true,
-  "engines": {"node": ">=22"},
-  "exports": "./src/index.js",
-  "scripts": {"start": "node src/server.js", "demo": "node src/server.js --demo", "test": "node --test", "example": "node examples/track.js"}
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./benchmark": "./src/benchmark.js",
+    "./diagnostics": "./src/diagnostics.js",
+    "./store": "./src/store.js",
+    "./pricing-registry": "./src/pricing-registry.js"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "demo": "node src/server.js --demo",
+    "test": "node --test",
+    "example": "node examples/track.js",
+    "benchmark": "node examples/benchmark.js"
+  }
 }
